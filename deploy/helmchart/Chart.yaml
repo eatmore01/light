@@ -1,0 +1,5 @@
+apiVersion: v2
+description: light web ui for generate kubeconfig after keycloak login
+name: light
+version: 0.0.1
+appVersion: 1.0.0

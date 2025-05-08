@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: auth-ui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: auth-ui
+    spec:
+      serviceAccountName: ui-sa
+      volumes:
+        - name: config-volume
+          secret:
+            secretName: auth-ui-config-secret
+      imagePullSecrets:
+      - name: reg-sec
+      containers:
+      - name: ui
+        image: yazhivotnoe/light:0.0.1
+        volumeMounts:
+          - name: config-volume
+            mountPath: /root/config/config.yml
+            subPath: config.yml
+      restartPolicy: Always

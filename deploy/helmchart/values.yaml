@@ -1,0 +1,113 @@
+generic:
+    labels: {}
+    annotations: {}
+    extraSelectorLabels: {}
+    podLabels: {}
+    podAnnotations: {}
+    extraVolumes: []
+    extraImagePullSecrets: []
+    usePredefinedAffinity: true
+
+podAffinityPreset: soft
+
+podAntiAffinityPreset: soft
+
+nodeAffinityPreset: {}
+
+diagnosticMode:
+    enbled: false
+    command: [ "sleep" ]
+    args: [ "infinity" ]
+
+releasePrefix: "-"
+
+image:
+    name: "yazhivotnoe/light"
+    tag: "0.0.1"
+    pullPolicy: "IfNotPresent"
+
+IngressEnable: false
+ingresses:
+  - name: light-ingress
+    hosts:
+      - hostname: light.chetatam.lolkek
+        paths:
+          - path: /
+            serviceName: light-svc
+            servicePort: 9000
+
+ServiceEnable: true
+services:
+    light-svc:
+        type: ClusterIP
+        ports:
+          - name: web
+            port: 9000
+            targetPort: 9000
+        extraSelectorLabels:
+            app: light
+
+deployments:
+    light:
+        replicas: 1
+        extraSelectorLabels:
+            app: light
+        restartPolicy: Always
+        serviceAccountName: light-sa
+        volumes:
+          - type: secret
+            name: light-config-sec
+        containers:
+          - name: light
+            ports:
+              - name: light
+                containerPort: 9000
+            volumeMounts:
+              - name: light-config-sec
+                mountPath: /root/config/config.yml
+                subPath: config.yml
+
+secrets:
+    light-config-sec:
+        data:
+            config.yml: |-
+                # base server config
+                host: "0.0.0.0"
+                port: "9000"
+
+                # deployed cluster name
+                clusterName: "" # change it
+
+                # deployed apiAddress
+                cluesterApiAddress: "" # change it
+
+
+                # default path to CA cluster cert if it placed in pods with serviceaccount 
+                clusterCAPath: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+                # keycloak vars
+                keycloakHost: "https://keycloak.com"
+                keycloakRealm: "<keycloak realm>" # realm with client
+
+                idpIssuerUrl: "https://keycloak.com/realms/<realm>"
+                clientID: "kubernetes" # client in keycloakRealm 
+                clientSecret: "" #
+
+                usernameClaim: "preferred_username"
+
+                # app vars
+                TemplatesDir: "templates"
+                jwtsecret: "n3X9QIPKn5ZfMFJq9i2p"
+                cookieSecure: false
+
+serviceAccount:
+    light-sa:
+        role:
+            name: light-role
+            rules:
+              - apiGroups:
+                  - "*"
+                resources:
+                  - "*"
+                verbs:
+                  - "*"
